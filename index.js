@@ -7,6 +7,7 @@ const stream = new Sse();
 const roomFactory = require('./room/router');
 const roomRouter = roomFactory(stream);
 const userRouter = require('./user/router');
+const Room = require('./room/model');
 
 const app = express();
 const db = require('./db');
@@ -17,8 +18,12 @@ app.use(bodyParser.json());
 app.use(roomRouter);
 app.use(userRouter);
 
-app.get('/stream', (req, res) => {
-    stream.init(req, res);
+app.get('/stream', async (request, response) => {
+    const rooms = await Room.findAll();
+    const data = JSON.stringify(rooms);
+    stream.updateInit(data);
+    stream.init(request, response);
+    response.send(data);
 });
 
 const port = process.env.PORT;
