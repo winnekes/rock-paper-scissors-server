@@ -7,4 +7,6 @@ const app = express();
 
 const { PORT } = require('./constants');
 
-app.listen(PORT, () => console.log('listening on port: ', PORT));
+const port = process.env.PORT || PORT;
+
+app.listen(port, () => console.log('listening on port: ', port));
