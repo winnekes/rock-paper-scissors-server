@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const Sse = require('json-sse');
+const db = require('./db');
 
 const app = express();
 app.use(cors());
