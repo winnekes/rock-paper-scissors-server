@@ -3,16 +3,23 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const Sse = require('json-sse');
 
-const db = require('./db');
+const stream = new Sse();
+const roomFactory = require('./room/router');
+const roomRouter = roomFactory(stream);
 const userRouter = require('./user/router');
-const authRouter = require('./auth/router');
 
 const app = express();
+const db = require('./db');
 
 app.use(cors());
 app.use(bodyParser.json());
+
 app.use(userRouter);
-app.use(authRouter);
+app.use(roomRouter);
+
+app.get('/stream', (req, res) => {
+    stream.init(req, res);
+});
 
 const port = process.env.PORT;
 
