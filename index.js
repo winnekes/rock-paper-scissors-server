@@ -5,8 +5,6 @@ const Sse = require('json-sse');
 
 const app = express();
 
-const { PORT } = require('./constants');
-
-const port = process.env.PORT || PORT;
+const port = process.env.PORT || 4000;
 
 app.listen(port, () => console.log('listening on port: ', port));
