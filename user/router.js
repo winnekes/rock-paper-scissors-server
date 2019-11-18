@@ -2,7 +2,8 @@
 
 const express = require('express');
 const bcrypt = require('bcrypt');
-
+const { toJWT, toData } = require('../auth/jwt');
+const auth = require('../auth/middleware');
 const { Router } = express;
 const User = require('./model');
 
@@ -19,4 +20,32 @@ router.post('/user', (req, res, next) => {
         .catch(err => next(err));
 });
 
+router.post('/login', (req, res, next) => {
+    User.findOne({
+        where: {
+            email: req.body.email,
+        },
+    })
+        .then(entity => {
+            if (!entity) {
+                res.status(400).send({
+                    message: 'User with that email does not exist',
+                });
+            } else if (bcrypt.compareSync(req.body.password, entity.password)) {
+                res.send({
+                    jwt: toJWT({ userId: entity.id }),
+                });
+            } else {
+                res.status(400).send({
+                    message: 'Password was incorrect',
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            res.status(500).send({
+                message: 'Something went wrong',
+            });
+        });
+});
 module.exports = router;

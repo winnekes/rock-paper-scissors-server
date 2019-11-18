@@ -14,8 +14,8 @@ const db = require('./db');
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use(userRouter);
 app.use(roomRouter);
+app.use(userRouter);
 
 app.get('/stream', (req, res) => {
     stream.init(req, res);
