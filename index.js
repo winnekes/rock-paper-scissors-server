@@ -8,6 +8,7 @@ const roomFactory = require('./room/router');
 const roomRouter = roomFactory(stream);
 const userRouter = require('./user/router');
 const Room = require('./room/model');
+const User = require('./user/model');
 const db = require('./db');
 
 const app = express();
@@ -19,7 +20,13 @@ app.use(roomRouter);
 app.use(userRouter);
 
 app.get('/stream', async (request, response) => {
-    const rooms = await Room.findAll();
+    const rooms = await Room.findAll({
+        include: [
+            {
+                model: User,
+            },
+        ],
+    });
     const data = JSON.stringify(rooms);
     stream.updateInit(data);
     stream.init(request, response);
