@@ -27,10 +27,12 @@ app.get('/stream', async (request, response) => {
             },
         ],
     });
-    const data = JSON.stringify(rooms);
-    stream.updateInit(data);
+
+    const action = { type: 'SET_ROOMS', payload: rooms };
+    const string = JSON.stringify(action);
+
+    stream.updateInit(string);
     stream.init(request, response);
-    response.send(data);
 });
 
 const port = process.env.PORT;

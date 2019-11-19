@@ -1,5 +1,3 @@
-// Now setup a user/router file. It should only define the POST /user endpoint. In your top-level index.js, require the user/router as userRouter and add it to your app using .use(userRouter).
-
 const express = require('express');
 const bcrypt = require('bcrypt');
 const { toJWT, toData } = require('../auth/jwt');

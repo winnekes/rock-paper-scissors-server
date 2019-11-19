@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { toJWT, toData } = require('./jwt');
+const { toJWT } = require('./jwt');
 const { Router } = express;
 const auth = require('./middleware');
 
