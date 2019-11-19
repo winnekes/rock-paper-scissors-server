@@ -26,6 +26,7 @@ app.get('/stream', async (request, response) => {
                 model: User,
             },
         ],
+        order: [['createdAt', 'ASC']],
     });
 
     const action = { type: 'SET_ROOMS', payload: rooms };

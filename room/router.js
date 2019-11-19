@@ -9,83 +9,82 @@ const { Router } = express;
 function factory(stream) {
     const router = new Router();
 
-    router.post('/room', auth, async (request, response, next) => {
+    router.post('/room', auth, async (request, response) => {
         const room = await Room.create(request.body);
-
-        const action = {
-            type: 'ADD_ROOM',
-            payload: room,
-        };
-
-        const string = JSON.stringify(action);
-        stream.send(string);
-
-        response.send(action);
-    });
-
-    router.get('/room/:roomName', auth, async (request, response, next) => {
-        const room = await Room.findOne({
-            include: [{ model: User }],
-            where: { name: request.params.roomName },
+        const rooms = await Room.findAll({
+            include: [
+                {
+                    model: User,
+                },
+            ],
+            order: [['createdAt', 'ASC']],
         });
 
         const action = {
-            type: 'SELECT_ROOM',
-            payload: room,
+            type: 'SET_ROOMS',
+            payload: rooms,
         };
+
         const string = JSON.stringify(action);
         stream.send(string);
-
-        response.send(room);
+        response.send(action);
     });
 
-    router.put('/join', auth, async (request, response, next) => {});
-    router.get(
-        '/room/:roomName/join',
-        auth,
-        async (request, response, next) => {
-            const user = await User.findByPk(request.user.id);
-            const room = await Room.findOne({
-                include: [{ model: User }],
-                where: { name: request.params.roomName },
-            });
+    router.put('/join/:name', auth, async (request, response) => {
+        const { name } = request.params;
 
-            const update = await user.update({ roomId: room.id });
+        const user = await User.findByPk(request.user.id);
+        const room = await Room.findOne({
+            where: { name },
+        });
 
-            const rooms = await Room.findAll({
-                include: [
-                    {
-                        model: User,
-                    },
-                ],
-            });
+        const updatedUser = await user.update({ roomId: room.id });
 
-            const updatedRoom = await Room.findOne({
-                include: [{ model: User }],
-                where: { name: request.params.roomName },
-            });
-            const actionJoin = {
-                type: 'JOIN_ROOM',
-                payload: room,
-            };
-            const actionSelect = {
-                type: 'SELECT_ROOM',
-                payload: updatedRoom,
-            };
-            const actionRooms = {
-                type: 'SET_ROOMS',
-                payload: rooms,
-            };
+        const rooms = await Room.findAll({
+            include: [
+                {
+                    model: User,
+                },
+            ],
+            order: [['createdAt', 'ASC']],
+        });
 
-            const stringJoin = JSON.stringify(actionJoin);
-            stream.send(stringJoin);
-            const stringRooms = JSON.stringify(actionRooms);
-            stream.send(stringRooms);
-            const stringSelect = JSON.stringify(actionSelect);
-            stream.send(stringSelect);
-            response.send(rooms);
-        }
-    );
+        const action = {
+            type: 'SET_ROOMS',
+            payload: rooms,
+        };
+
+        const string = JSON.stringify(action);
+        stream.send(string);
+        response.send(updatedUser);
+    });
+
+    router.put('/start/:name', auth, async (request, response) => {
+        const { name } = request.params;
+
+        const room = await Room.findOne({
+            where: { name },
+        });
+        const updatedRoom = await room.update({ status: 'running' });
+
+        const rooms = await Room.findAll({
+            include: [
+                {
+                    model: User,
+                },
+            ],
+            order: [['createdAt', 'ASC']],
+        });
+        const action = {
+            type: 'SET_ROOMS',
+            payload: rooms,
+        };
+
+        const string = JSON.stringify(action);
+        stream.send(string);
+        response.send(updatedRoom);
+    });
+
     return router;
 }
 
