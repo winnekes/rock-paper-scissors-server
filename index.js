@@ -8,9 +8,9 @@ const roomFactory = require('./room/router');
 const roomRouter = roomFactory(stream);
 const userRouter = require('./user/router');
 const Room = require('./room/model');
+const db = require('./db');
 
 const app = express();
-const db = require('./db');
 
 app.use(cors());
 app.use(bodyParser.json());
