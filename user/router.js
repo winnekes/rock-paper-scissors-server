@@ -11,7 +11,6 @@ const router = new Router();
 
 router.post('/user', (req, res, next) => {
     const user = {
-        email: req.body.email,
         username: req.body.username,
         password: bcrypt.hashSync(req.body.password, 10),
     };
@@ -23,13 +22,13 @@ router.post('/user', (req, res, next) => {
 router.post('/login', (req, res, next) => {
     User.findOne({
         where: {
-            email: req.body.email,
+            username: req.body.username,
         },
     })
         .then(entity => {
             if (!entity) {
                 res.status(400).send({
-                    message: 'User with that email does not exist',
+                    message: 'User with that name does not exist',
                 });
             } else if (bcrypt.compareSync(req.body.password, entity.password)) {
                 res.send({
