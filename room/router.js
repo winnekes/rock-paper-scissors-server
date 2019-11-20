@@ -7,7 +7,7 @@ const User = require('../user/model');
 const { Router } = express;
 
 function factory(stream) {
-    const include = {
+    const includeUsersAndOrder = {
         include: [{ model: User }],
         order: [['createdAt', 'ASC']],
     };
@@ -21,7 +21,7 @@ function factory(stream) {
 
     router.post('/room', auth, async (request, response) => {
         const room = await Room.create(request.body);
-        const rooms = await Room.findAll(include);
+        const rooms = await Room.findAll(includeUsersAndOrder);
 
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
@@ -35,10 +35,24 @@ function factory(stream) {
         const user = await User.findByPk(request.user.id);
         const room = await Room.findOne({
             where: { name },
+            include: [{ model: User }],
         });
-
         const updatedUser = await user.update({ roomId: room.id });
-        const rooms = await Room.findAll(include);
+        const updatedRoom = await Room.findOne({
+            where: { name },
+            include: [{ model: User }],
+        });
+        if (updatedRoom.users.length === 1) {
+            const updatedRoomStatus = await updatedRoom.update({
+                status: 'waiting for one more player',
+            });
+        } else if (updatedRoom.users.length === 2) {
+            const updatedRoomStatus = await updatedRoom.update({
+                status: 'ready to start',
+            });
+        }
+
+        const rooms = await Room.findAll(includeUsersAndOrder);
 
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
@@ -52,13 +66,27 @@ function factory(stream) {
         const room = await Room.findOne({
             where: { name },
         });
-        const updatedRoom = await room.update({ status: 'running' });
-        const rooms = await Room.findAll(include);
+        const updatedRoomStatu = await room.update({ status: 'running' });
+        const rooms = await Room.findAll(includeUsersAndOrder);
 
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
 
-        response.send(updatedRoom);
+        response.send(updatedRoomStatus);
+    });
+
+    router.put('/points/:userId', auth, async (request, response, next) => {
+        const user = await User.findByPk(request.user.id);
+
+        const updatedUser = await user.update({ points: 1 });
+
+        const rooms = await Room.findAll(includeUsersAndOrder);
+
+        const string = JSON.stringify(actionCreator(rooms));
+
+        stream.send(string);
+
+        response.send(updatedUser);
     });
 
     return router;

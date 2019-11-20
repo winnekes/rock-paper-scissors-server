@@ -9,7 +9,7 @@ const Room = sequelize.define('room', {
     },
     status: {
         type: Sequelize.STRING,
-        defaultValue: 'waiting',
+        defaultValue: 'not running',
     },
 });
 
