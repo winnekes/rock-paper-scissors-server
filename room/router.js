@@ -7,27 +7,26 @@ const User = require('../user/model');
 const { Router } = express;
 
 function factory(stream) {
+    const include = {
+        include: [{ model: User }],
+        order: [['createdAt', 'ASC']],
+    };
+
+    const actionCreator = rooms => ({
+        type: 'SET_ROOMS',
+        payload: rooms,
+    });
+
     const router = new Router();
 
     router.post('/room', auth, async (request, response) => {
         const room = await Room.create(request.body);
-        const rooms = await Room.findAll({
-            include: [
-                {
-                    model: User,
-                },
-            ],
-            order: [['createdAt', 'ASC']],
-        });
+        const rooms = await Room.findAll(include);
 
-        const action = {
-            type: 'SET_ROOMS',
-            payload: rooms,
-        };
-
-        const string = JSON.stringify(action);
+        const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
-        response.send(action);
+
+        response.send(room);
     });
 
     router.put('/join/:name', auth, async (request, response) => {
@@ -39,23 +38,11 @@ function factory(stream) {
         });
 
         const updatedUser = await user.update({ roomId: room.id });
+        const rooms = await Room.findAll(include);
 
-        const rooms = await Room.findAll({
-            include: [
-                {
-                    model: User,
-                },
-            ],
-            order: [['createdAt', 'ASC']],
-        });
-
-        const action = {
-            type: 'SET_ROOMS',
-            payload: rooms,
-        };
-
-        const string = JSON.stringify(action);
+        const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
+
         response.send(updatedUser);
     });
 
@@ -66,22 +53,11 @@ function factory(stream) {
             where: { name },
         });
         const updatedRoom = await room.update({ status: 'running' });
+        const rooms = await Room.findAll(include);
 
-        const rooms = await Room.findAll({
-            include: [
-                {
-                    model: User,
-                },
-            ],
-            order: [['createdAt', 'ASC']],
-        });
-        const action = {
-            type: 'SET_ROOMS',
-            payload: rooms,
-        };
-
-        const string = JSON.stringify(action);
+        const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
+
         response.send(updatedRoom);
     });
 
