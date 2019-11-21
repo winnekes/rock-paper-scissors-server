@@ -132,8 +132,8 @@ function factory(stream) {
         const users = await User.findAll({
             where: { roomId: room.id },
         });
-        const user1 = users[0];
-        const user2 = users[1];
+        const user1 = user;
+        const user2 = users.find(user => user.id !== user1.id);
 
         const ROCK = 'rock';
         const SCISSORS = 'scissors';
