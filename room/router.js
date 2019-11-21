@@ -153,17 +153,19 @@ function factory(stream) {
                             winner: user1.username,
                         });
 
-                        const winnerGetsPoints = await user1.increment(
-                            'points'
-                        );
-                    }
-                } else {
-                    updatedRoom = await room.update({
-                        status: 'game is over',
-                        winner: user2.username,
-                    });
+                        const winnerGetsPoints = await user1.increment({
+                            points: 1,
+                        });
+                    } else {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user2.username,
+                        });
 
-                    const winnerGetsPoints = await user2.increment('points');
+                        const winnerGetsPoints = await user2.increment({
+                            points: 1,
+                        });
+                    }
                 }
                 if (user1.choice === SCISSORS) {
                     if (user2.choice === PAPER) {
@@ -172,18 +174,19 @@ function factory(stream) {
                             winner: user1.username,
                         });
 
-                        const winnerGetsPoints = await user1.increment(
-                            'points'
-                        );
-                    }
-                } else {
-                    updatedRoom = await room.update({
-                        status: 'game is over',
-                        winner: user2.username,
-                    });
+                        const winnerGetsPoints = await user1.increment({
+                            points: 1,
+                        });
+                    } else {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user2.username,
+                        });
 
-                    const winnerGetsPoints = await user2.increment('points');
-                    console.log(winnerGetsPoints);
+                        const winnerGetsPoints = await user2.increment({
+                            points: 1,
+                        });
+                    }
                 }
                 if (user1.choice === PAPER) {
                     if (user2.choice !== SCISSORS) {
@@ -192,24 +195,24 @@ function factory(stream) {
                             winner: user1.username,
                         });
 
-                        const winnerGetsPoints = await user1.increment(
-                            'points'
-                        );
-                        console.log(winnerGetsPoints);
-                    }
-                } else {
-                    updatedRoom = await room.update({
-                        status: 'game is over',
-                        winner: user2.username,
-                    });
+                        const winnerGetsPoints = await user1.increment({
+                            points: 1,
+                        });
+                    } else {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user2.username,
+                        });
 
-                    const winnerGetsPoints = await user2.increment('points');
-                    console.log(winnerGetsPoints);
+                        const winnerGetsPoints = await user2.increment({
+                            points: 1,
+                        });
+                    }
                 }
             }
         }
-        console.log('user1', user1);
-        console.log('user2', user2);
+        console.log('user1', user1.username + user1.points);
+        console.log('user2', user2.username + user2.points);
 
         const rooms = await Room.findAll(includeUsersAndOrder);
         const string = JSON.stringify(actionCreator(rooms));
