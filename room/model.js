@@ -11,6 +11,10 @@ const Room = sequelize.define('room', {
         type: Sequelize.STRING,
         defaultValue: 'not running',
     },
+    winner: {
+        type: Sequelize.STRING,
+        defaultValue: 'no winner',
+    },
 });
 
 module.exports = Room;

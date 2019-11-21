@@ -1,4 +1,7 @@
 const express = require('express');
+const Sequelize = require('sequelize');
+const op = Sequelize.Op;
+
 const auth = require('../auth/middleware');
 
 const Room = require('./model');
@@ -9,7 +12,11 @@ const { Router } = express;
 function factory(stream) {
     const includeUsersAndOrder = {
         include: [{ model: User }],
-        order: [['createdAt', 'ASC']],
+
+        order: [
+            ['createdAt', 'ASC'],
+            [{ model: User }, 'username', 'ASC'],
+        ],
     };
 
     const actionCreator = rooms => ({
@@ -21,8 +28,8 @@ function factory(stream) {
 
     router.post('/room', auth, async (request, response) => {
         const room = await Room.create(request.body);
-        const rooms = await Room.findAll(includeUsersAndOrder);
 
+        const rooms = await Room.findAll(includeUsersAndOrder);
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
 
@@ -37,7 +44,12 @@ function factory(stream) {
             where: { name },
             include: [{ model: User }],
         });
-        const updatedUser = await user.update({ roomId: room.id });
+        const updatedUser = await user.update({
+            roomId: room.id,
+            turn: false,
+            points: 0,
+            choice: 'no choice',
+        });
         const updatedRoom = await Room.findOne({
             where: { name },
             include: [{ model: User }],
@@ -45,6 +57,7 @@ function factory(stream) {
         if (updatedRoom.users.length === 1) {
             const updatedRoomStatus = await updatedRoom.update({
                 status: 'waiting for one more player',
+                winner: 'no winner',
             });
         } else if (updatedRoom.users.length === 2) {
             const updatedRoomStatus = await updatedRoom.update({
@@ -53,7 +66,6 @@ function factory(stream) {
         }
 
         const rooms = await Room.findAll(includeUsersAndOrder);
-
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
 
@@ -62,32 +74,162 @@ function factory(stream) {
 
     router.put('/start/:name', auth, async (request, response) => {
         const { name } = request.params;
+        /* const user = await User.findByPk(request.user.id);
+        const updatedUser = await user.update({ turn: true }); */
 
-        const room = await Room.findOne({
-            where: { name },
+        const room = await Room.findOne({ where: { name } });
+
+        const updatedRoomStatus = await room.update({
+            status: 'running',
+            winner: 'no winner',
         });
-        const updatedRoomStatu = await room.update({ status: 'running' });
-        const rooms = await Room.findAll(includeUsersAndOrder);
 
+        const users = await User.findAll({ where: { roomId: room.id } });
+
+        const updatedUsers = await Promise.all(
+            users.map(async user => await user.update({ choice: 'no choice' }))
+        );
+
+        const rooms = await Room.findAll(includeUsersAndOrder);
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
 
         response.send(updatedRoomStatus);
     });
 
-    router.put('/points/:userId', auth, async (request, response, next) => {
+    router.put('/decideWinner/:name', auth, async (request, response, next) => {
+        const { name } = request.params;
+
+        const user1 = await User.findByPk(request.user.id);
+        const updatedUser = await user1.update(request.body);
+
+        const user2 = await User.findOne({
+            where: {
+                id: {
+                    [op.not]: user1.id,
+                },
+            },
+        });
+
+        const choice1 = user1.choice;
+        const choice2 = user2.choice;
+
+        const ROCK = 'rock';
+        const SCISSORS = 'scissors';
+        const PAPER = 'paper';
+
+        const room = await Room.findOne({ where: { name } });
+        const users = await User.findAll({ where: { roomId: room.id } });
+
+        if (user1.choice !== 'no choice' && user2.choice !== 'no choice') {
+            if (user1.choice === user2.choice) {
+                updatedRoom = await room.update({
+                    status: 'game is over',
+                    winner: `oh, it's a tie!`,
+                });
+            } else {
+                if (user1.choice === ROCK) {
+                    if (user2.choice === SCISSORS) {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user1.username,
+                        });
+
+                        const winnerGetsPoints = await user1.increment(
+                            'points'
+                        );
+                    }
+                } else {
+                    updatedRoom = await room.update({
+                        status: 'game is over',
+                        winner: user2.username,
+                    });
+
+                    const winnerGetsPoints = await user2.increment('points');
+                }
+                if (user1.choice === SCISSORS) {
+                    if (user2.choice === PAPER) {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user1.username,
+                        });
+
+                        const winnerGetsPoints = await user1.increment(
+                            'points'
+                        );
+                    }
+                } else {
+                    updatedRoom = await room.update({
+                        status: 'game is over',
+                        winner: user2.username,
+                    });
+
+                    const winnerGetsPoints = await user2.increment('points');
+                }
+                if (user1.choice === PAPER) {
+                    if (user2.choice === SCISSORS) {
+                        updatedRoom = await room.update({
+                            status: 'game is over',
+                            winner: user2.username,
+                        });
+
+                        const winnerGetsPoints = await user2.increment(
+                            'points'
+                        );
+                    }
+                } else {
+                    updatedRoom = await room.update({
+                        status: 'game is over',
+                        winner: user1.username,
+                    });
+
+                    const winnerGetsPoints = await user1.increment('points');
+                }
+            }
+        }
+        const rooms = await Room.findAll(includeUsersAndOrder);
+        const string = JSON.stringify(actionCreator(rooms));
+        stream.send(string);
+
+        response.send(updatedUser.choice);
+    });
+
+    router.put('/point', auth, async (request, response, next) => {
         const user = await User.findByPk(request.user.id);
 
-        const updatedUser = await user.update({ points: 1 });
+        const updatedUser = await user.increment('points');
 
         const rooms = await Room.findAll(includeUsersAndOrder);
-
         const string = JSON.stringify(actionCreator(rooms));
-
         stream.send(string);
 
         response.send(updatedUser);
     });
+
+    /*     router.put('/turn/:name', auth, async (request, response, next) => {
+        const { name } = request.params;
+
+        const room = await Room.findOne({
+            where: { name },
+        });
+        const users = await User.findAll({
+            where: { roomId: room.id },
+        });
+
+        const updatedUser = await Promise.all(
+            users.map(async user =>
+                user.turn
+                    ? await user.update({ turn: false })
+                    : await user.update({ turn: true })
+            )
+        );
+
+        const rooms = await Room.findAll(includeUsersAndOrder);
+        const string = JSON.stringify(actionCreator(rooms));
+        stream.send(string);
+
+        response.send(rooms);
+    }); */
 
     return router;
 }

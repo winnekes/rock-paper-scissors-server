@@ -24,7 +24,11 @@ app.use(userRouter);
 app.get('/stream', async (request, response) => {
     const rooms = await Room.findAll({
         include: [{ model: User }],
-        order: [['createdAt', 'ASC']],
+
+        order: [
+            ['createdAt', 'ASC'],
+            [{ model: User }, 'username', 'ASC'],
+        ],
     });
     const action = { type: 'SET_ROOMS', payload: rooms };
 

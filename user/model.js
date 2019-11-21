@@ -13,9 +13,17 @@ const User = sequelize.define('user', {
         type: Sequelize.STRING,
         allowNull: false,
     },
+    choice: {
+        type: Sequelize.STRING,
+        defaultValue: 'no choice',
+    },
     points: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
+    },
+    turn: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
     },
 });
 
