@@ -100,13 +100,9 @@ function factory(stream) {
         const { name } = request.params;
 
         const room = await Room.findOne({ where: { name } });
-
-        const updatedRoomStatus = await room.update({
-            status: 'not running',
-            winner: 'no winner',
-        });
-
         const users = await User.findAll({ where: { roomId: room.id } });
+
+        const updatedRoomStatus = await Room.destroy({ where: { name } });
 
         const updatedUsers = await Promise.all(
             users.map(
