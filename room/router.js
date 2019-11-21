@@ -96,6 +96,31 @@ function factory(stream) {
 
         response.send(updatedRoomStatus);
     });
+    router.put('/end/:name', auth, async (request, response) => {
+        const { name } = request.params;
+
+        const room = await Room.findOne({ where: { name } });
+
+        const updatedRoomStatus = await room.update({
+            status: 'not running',
+            winner: 'no winner',
+        });
+
+        const users = await User.findAll({ where: { roomId: room.id } });
+
+        const updatedUsers = await Promise.all(
+            users.map(
+                async user =>
+                    await user.update({ choice: 'no choice', points: 0 })
+            )
+        );
+
+        const rooms = await Room.findAll(includeUsersAndOrder);
+        const string = JSON.stringify(actionCreator(rooms));
+        stream.send(string);
+
+        response.send(updatedRoomStatus);
+    });
 
     router.put('/decideWinner/:name', auth, async (request, response, next) => {
         const { name } = request.params;
