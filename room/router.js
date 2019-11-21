@@ -181,8 +181,9 @@ function factory(stream) {
                         status: 'game is over',
                         winner: user2.username,
                     });
-                    console.log(winnerGetsPoints);
+
                     const winnerGetsPoints = await user2.increment('points');
+                    console.log(winnerGetsPoints);
                 }
                 if (user1.choice === PAPER) {
                     if (user2.choice !== SCISSORS) {
