@@ -125,26 +125,19 @@ function factory(stream) {
     router.put('/decideWinner/:name', auth, async (request, response, next) => {
         const { name } = request.params;
 
-        const user1 = await User.findByPk(request.user.id);
-        const updatedUser = await user1.update(request.body);
+        const user = await User.findByPk(request.user.id);
+        const updatedUser = await user.update(request.body);
 
-        const user2 = await User.findOne({
-            where: {
-                id: {
-                    [op.not]: user1.id,
-                },
-            },
+        const room = await Room.findOne({ where: { name } });
+        const users = await User.findAll({
+            where: { roomId: room.id },
         });
-
-        const choice1 = user1.choice;
-        const choice2 = user2.choice;
+        user1 = users.find(user => user.id === request.user.id);
+        user2 = users.find(user => user.id !== request.user.id);
 
         const ROCK = 'rock';
         const SCISSORS = 'scissors';
         const PAPER = 'paper';
-
-        const room = await Room.findOne({ where: { name } });
-        const users = await User.findAll({ where: { roomId: room.id } });
 
         if (user1.choice !== 'no choice' && user2.choice !== 'no choice') {
             if (user1.choice === user2.choice) {
