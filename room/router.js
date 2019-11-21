@@ -132,8 +132,8 @@ function factory(stream) {
         const users = await User.findAll({
             where: { roomId: room.id },
         });
-        user1 = users.find(user => user.id === request.user.id);
-        user2 = users.find(user => user.id !== request.user.id);
+        const user1 = users[0];
+        const user2 = users[1];
 
         const ROCK = 'rock';
         const SCISSORS = 'scissors';
@@ -181,30 +181,35 @@ function factory(stream) {
                         status: 'game is over',
                         winner: user2.username,
                     });
-
+                    console.log(winnerGetsPoints);
                     const winnerGetsPoints = await user2.increment('points');
                 }
                 if (user1.choice === PAPER) {
-                    if (user2.choice === SCISSORS) {
+                    if (user2.choice !== SCISSORS) {
                         updatedRoom = await room.update({
                             status: 'game is over',
-                            winner: user2.username,
+                            winner: user1.username,
                         });
 
-                        const winnerGetsPoints = await user2.increment(
+                        const winnerGetsPoints = await user1.increment(
                             'points'
                         );
+                        console.log(winnerGetsPoints);
                     }
                 } else {
                     updatedRoom = await room.update({
                         status: 'game is over',
-                        winner: user1.username,
+                        winner: user2.username,
                     });
 
-                    const winnerGetsPoints = await user1.increment('points');
+                    const winnerGetsPoints = await user2.increment('points');
+                    console.log(winnerGetsPoints);
                 }
             }
         }
+        console.log('user1', user1);
+        console.log('user2', user2);
+
         const rooms = await Room.findAll(includeUsersAndOrder);
         const string = JSON.stringify(actionCreator(rooms));
         stream.send(string);
