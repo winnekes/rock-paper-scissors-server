@@ -111,7 +111,11 @@ function factory(stream) {
         const updatedUsers = await Promise.all(
             users.map(
                 async user =>
-                    await user.update({ choice: 'no choice', points: 0 })
+                    await user.update({
+                        choice: 'no choice',
+                        points: 0,
+                        roomId: null,
+                    })
             )
         );
 
