@@ -40,6 +40,22 @@ function factory(stream) {
         const { name } = request.params;
 
         const user = await User.findByPk(request.user.id);
+        if (user.roomId) {
+            const oldRoom = await Room.findOne({
+                where: { id: user.roomId },
+                include: [{ model: User }],
+            });
+            if (oldRoom.users.length === 2) {
+                const updatedOldRoom = await oldRoom.update({
+                    status: 'waiting for one more player',
+                });
+            } else {
+                const updatedOldRoom = await oldRoom.update({
+                    status: 'not running',
+                });
+            }
+        }
+
         const room = await Room.findOne({
             where: { name },
             include: [{ model: User }],
