@@ -249,15 +249,17 @@ function factory(stream) {
         response.send(updatedUser);
     });
 
-    /*     router.put('/turn/:name', auth, async (request, response, next) => {
+    router.put('/turn/:name', auth, async (request, response, next) => {
         const { name } = request.params;
 
         const room = await Room.findOne({
             where: { name },
+            include: [{ model: User }],
         });
-        const users = await User.findAll({
+        /*         const users = await User.findAll({
             where: { roomId: room.id },
-        });
+        }); */
+        const users = room.users;
 
         const updatedUser = await Promise.all(
             users.map(async user =>
@@ -272,7 +274,7 @@ function factory(stream) {
         stream.send(string);
 
         response.send(rooms);
-    }); */
+    });
 
     return router;
 }
