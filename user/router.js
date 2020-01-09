@@ -14,7 +14,13 @@ router.post('/user', (req, res, next) => {
     };
     User.create(user)
         .then(user => res.send(user))
-        .catch(err => next(err));
+        .catch(err => {
+            console.error(err);
+            res.status(400).send({
+                message:
+                    'A user with this username already exists, try again with another name',
+            });
+        });
 });
 
 router.post('/login', (req, res, next) => {
